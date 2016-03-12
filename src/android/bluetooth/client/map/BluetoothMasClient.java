@@ -19,6 +19,7 @@ package android.bluetooth.client.map;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothMasInstance;
 import android.bluetooth.BluetoothSocket;
+import android.bluetooth.SdpMasRecord;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
@@ -284,7 +285,7 @@ public class BluetoothMasClient {
     private final BluetoothDevice mDevice;
 
     /** MAS instance associated with client */
-    private final BluetoothMasInstance mMas;
+    private final SdpMasRecord mMas;
 
     /** callback handler to application */
     private final Handler mCallback;
@@ -452,7 +453,8 @@ public class BluetoothMasClient {
     }
 
     private void sendToClient(int event, boolean success, Object param) {
-        mCallback.obtainMessage(event, success ? STATUS_OK : STATUS_FAILED, mMas.getId(),
+        // Send  event, status and notification state for both sucess and failure case.
+        mCallback.obtainMessage(event, success ? STATUS_OK : STATUS_FAILED, mMas.getMasInstanceId(),
             param).sendToTarget();
     }
 
@@ -466,7 +468,7 @@ public class BluetoothMasClient {
         @Override
         public void run() {
             try {
-                socket = mDevice.createRfcommSocket(mMas.getChannel());
+                socket = mDevice.createRfcommSocket(mMas.getRfcommCannelNumber());
                 socket.connect();
 
                 BluetoothMapRfcommTransport transport;
@@ -541,6 +543,7 @@ public class BluetoothMasClient {
         }
 
         public void setPeriod(Date filterBegin, Date filterEnd) {
+        //Handle possible NPE for obexTime constructor utility
             if(filterBegin != null )
                 periodBegin = (new ObexTime(filterBegin)).toString();
             if(filterEnd != null)
@@ -585,7 +588,7 @@ public class BluetoothMasClient {
      *            <code>arg2</code> to MAS instance ID. <code>obj</code> in
      *            message is event specific.
      */
-    public BluetoothMasClient(BluetoothDevice device, BluetoothMasInstance mas,
+    public BluetoothMasClient(BluetoothDevice device, SdpMasRecord mas,
             Handler callback) {
         mDevice = device;
         mMas = mas;
@@ -599,7 +602,7 @@ public class BluetoothMasClient {
      *
      * @return instance data object
      */
-    public BluetoothMasInstance getInstanceData() {
+    public SdpMasRecord getInstanceData() {
         return mMas;
     }
 
@@ -664,7 +667,7 @@ public class BluetoothMasClient {
             mMnsService = new BluetoothMnsService();
         }
 
-        mMnsService.registerCallback(mMas.getId(), mSessionHandler);
+        mMnsService.registerCallback(mMas.getMasInstanceId(), mSessionHandler);
 
         BluetoothMasRequest request = new BluetoothMasRequestSetNotificationRegistration(true);
         return mObexSession.makeRequest(request);
@@ -674,7 +677,7 @@ public class BluetoothMasClient {
         Log.v(TAG, "enableNotifications()");
 
         if (mMnsService != null) {
-            mMnsService.unregisterCallback(mMas.getId());
+            mMnsService.unregisterCallback(mMas.getMasInstanceId());
         }
 
         mMnsService = null;
