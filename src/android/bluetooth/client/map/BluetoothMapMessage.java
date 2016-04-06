@@ -91,7 +91,8 @@ public class BluetoothMapMessage {
         }
 
         mSubject = attrs.get("subject");
-        String dateTime = attrs.get("dateTime");
+        String dateTime = attrs.get("datetime");
+        //Handle possible NPE when not able to retreive datetime attribute
         if(dateTime != null){
             mDateTime = (new ObexTime(dateTime)).getTime();
         } else {

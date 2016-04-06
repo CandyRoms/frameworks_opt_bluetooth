@@ -96,11 +96,13 @@ final class BluetoothMasRequestGetMessagesListing extends BluetoothMasRequest {
         if (subjectLength != 0) {
             oap.add(OAP_TAGID_SUBJECT_LENGTH, (byte) subjectLength);
         }
-
+        /* Include parameterMask only when specific values are selected,
+         * to avoid IOT specific issue with no paramterMask header support.
+         */
         if (parameters >  0 ) {
             oap.add(OAP_TAGID_PARAMETER_MASK, parameters);
         }
-
+        // Allow GetMessageListing for maxlistcount value 0 also.
         if (maxListCount >= 0) {
             oap.add(OAP_TAGID_MAX_LIST_COUNT, (short) maxListCount);
         }
